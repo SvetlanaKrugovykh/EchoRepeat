@@ -13,6 +13,7 @@ const SEGMENT_DURATION = parseFloat(process.env.SEGMENT_DURATION || '5')
 const REPEAT_EACH = parseInt(process.env.REPEAT_EACH || '2')
 
 const OUTPUT_DIR = path.resolve(__dirname, 'output')
+const DEBUG_LEVEL = Number(process.env.DEBUG_LEVEL) || 1
 
 if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR)
@@ -52,21 +53,21 @@ async function splitAudio(file, segmentDuration) {
 
 async function playSegment(segment, repeatCount, playbackRate = 0.5) {
   try {
-    console.log(`Attempting to load segment: ${segment}`)
+    if (DEBUG_LEVEL > 2) console.log(`Attempting to load segment: ${segment}`)
     const audioBuffer = await audioLoader(segment)
-    console.log(`Loaded segment: ${segment}`)
+    if (DEBUG_LEVEL > 2) console.log(`Loaded segment: ${segment}`)
 
     for (let i = 0; i < repeatCount; i++) {
-      console.log(`Playing segment: ${segment}, repeat: ${i + 1}/${repeatCount}`)
+      if (DEBUG_LEVEL > 2) console.log(`[${new Date().toISOString()}] Playing segment: ${segment}, repeat: ${i + 1}/${repeatCount}`)
       await new Promise((resolve) => {
         const playback = audioPlay(audioBuffer, { loop: false, playbackRate })
         playback.onended = () => {
-          console.log(`Finished playing segment: ${segment}, repeat: ${i + 1}`)
+          if (DEBUG_LEVEL > 2) console.log(`[${new Date().toISOString()}] Finished playing segment: ${segment}, repeat: ${i + 1}`)
           resolve()
         }
 
         setTimeout(() => {
-          console.log(`Timeout reached for segment: ${segment}, repeat: ${i + 1}`)
+          if (DEBUG_LEVEL > 2) console.log(`[${new Date().toISOString()}] Timeout reached for segment: ${segment}, repeat: ${i + 1}`)
           resolve()
         }, 10000)
       })
@@ -83,13 +84,13 @@ async function playSegment(segment, repeatCount, playbackRate = 0.5) {
     console.log(`Audio split into ${segments.length} segments.`)
 
     for (const segment of segments) {
-      console.log(`Processing segment: ${segment}`)
+      if (DEBUG_LEVEL > 2) console.log(`Processing segment: ${segment}`)
       await playSegment(segment, REPEAT_EACH, 0.2)
     }
 
     for (const file of segments) {
-      console.log(`Deleting segment file: ${file}`)
-      fs.unlinkSync(file);
+      if (DEBUG_LEVEL > 2) console.log(`Deleting segment file: ${file}`)
+      fs.unlinkSync(file)
     }
     console.log('All segments played and deleted.')
   } catch (error) {
