@@ -14,6 +14,7 @@ const REPEAT_EACH = parseInt(process.env.REPEAT_EACH || '2')
 
 const OUTPUT_DIR = path.resolve(__dirname, 'output')
 const DEBUG_LEVEL = Number(process.env.DEBUG_LEVEL) || 1
+const TIMEOUT = parseInt(process.env.TIMEOUT) || 20000
 
 if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR)
@@ -69,7 +70,7 @@ async function playSegment(segment, repeatCount, playbackRate = 0.5) {
         setTimeout(() => {
           if (DEBUG_LEVEL > 2) console.log(`[${new Date().toISOString()}] Timeout reached for segment: ${segment}, repeat: ${i + 1}`)
           resolve()
-        }, 10000)
+        }, TIMEOUT)
       })
     }
   } catch (error) {
