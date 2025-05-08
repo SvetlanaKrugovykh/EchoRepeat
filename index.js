@@ -50,24 +50,49 @@ async function splitAudio(file, segmentDuration) {
   return segments
 }
 
-async function playSegment(segment, repeatCount) {
-  const audioBuffer = await audioLoader(segment)
-  for (let i = 0; i < repeatCount; i++) {
-    await new Promise((resolve) => {
-      const playback = audioPlay(audioBuffer, { loop: false }, resolve)
-      playback.onended = resolve
-    })
+async function playSegment(segment, repeatCount, playbackRate = 0.5) {
+  try {
+    console.log(`Attempting to load segment: ${segment}`)
+    const audioBuffer = await audioLoader(segment)
+    console.log(`Loaded segment: ${segment}`)
+
+    for (let i = 0; i < repeatCount; i++) {
+      console.log(`Playing segment: ${segment}, repeat: ${i + 1}/${repeatCount}`)
+      await new Promise((resolve) => {
+        const playback = audioPlay(audioBuffer, { loop: false, playbackRate })
+        playback.onended = () => {
+          console.log(`Finished playing segment: ${segment}, repeat: ${i + 1}`)
+          resolve()
+        }
+
+        setTimeout(() => {
+          console.log(`Timeout reached for segment: ${segment}, repeat: ${i + 1}`)
+          resolve()
+        }, 10000)
+      })
+    }
+  } catch (error) {
+    console.error(`Error playing segment: ${segment}`, error)
   }
 }
 
 (async () => {
-  const segments = await splitAudio(AUDIO_FILE, SEGMENT_DURATION)
-  for (const segment of segments) {
-    await playSegment(segment, REPEAT_EACH)
-  }
+  try {
+    console.log('Starting audio processing...')
+    const segments = await splitAudio(AUDIO_FILE, SEGMENT_DURATION)
+    console.log(`Audio split into ${segments.length} segments.`)
 
-  for (const file of segments) {
-    fs.unlinkSync(file)
-  }
+    for (const segment of segments) {
+      console.log(`Processing segment: ${segment}`)
+      await playSegment(segment, REPEAT_EACH, 0.2)
+    }
 
+    for (const file of segments) {
+      console.log(`Deleting segment file: ${file}`)
+      fs.unlinkSync(file);
+    }
+    console.log('All segments played and deleted.')
+  } catch (error) {
+    console.error('Error in main execution:', error)
+  }
 })()
