@@ -3,3 +3,5 @@ segment_*.mp3
 node_modules/
 assets/
 output/
+out/
+silence_*.mp3
